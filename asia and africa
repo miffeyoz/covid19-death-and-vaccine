@@ -1,0 +1,87 @@
+use miftahunberhasil;
+
+select location, date, total_cases, population, (total_cases/population)*100 as casepercentage 
+from kematian
+where location <> 'africa'  
+order by casepercentage desc;
+
+
+select location, date, count(code) as tanda, max(total_deaths) as totaldeaths
+from kematian
+group by location
+order by totaldeaths desc;
+
+desc coviddeaths;
+
+alter table coviddeaths
+modify total_deaths int;
+
+select date, location, sum(new_cases) as kasusbaru, sum(new_deaths) as  matibaru,  (sum(new_deaths)/sum(new_cases))*100 as casepercentage 
+from kematian
+where location <> 'africa'
+group by date
+order by casepercentage DESC;
+
+select * 
+from kematian mati
+join vaksin vak
+	on mati.location = vak.location 
+    and mati.date = vak.date;
+    
+
+
+use miftahunberhasil;
+select * from kematian; 
+select * from vaksin; 
+
+
+#itstartfromhere, progressing the portofolio project
+with popvac (continent, location, date, population, new_vaccinations, jumlahvaksin)
+as
+(
+select dea.continent, dea.location, dea.date, dea.population, vak.new_vaccinations,
+SUM(vak.new_vaccinations) over (partition by dea.location order by dea.location, dea.date) as jumlahvaksin
+from miftahunberhasil.kematian dea
+join miftahunberhasil.vaksin vak
+	on dea.location= vak.location
+	and dea.date = vak.date
+where dea.continent <> '' 
+)
+select *, (jumlahvaksin/population)*100 as lajuvaksinasi
+from popvac
+where jumlahvaksin <> 0
+;
+
+drop table if exists wowvaksin;
+create table wowvaksin 
+(
+continent varchar (100),
+location varchar (100),
+date text, 
+population int, 
+new_vaccinations text, 
+jumlahvaksin int
+);
+
+insert into wowvaksin
+select dea.continent, dea.location, dea.date, dea.population, vak.new_vaccinations,
+SUM(vak.new_vaccinations) over (partition by dea.location order by dea.location, dea.date) as jumlahvaksin
+from miftahunberhasil.kematian dea
+join miftahunberhasil.vaksin vak
+	on dea.location= vak.location
+	and dea.date = vak.date
+where dea.continent <> '';
+
+select *, (jumlahvaksin/population)*100 as lajuvaksinasi
+from wowvaksin;
+
+select * from wowvaksin
+where location <> 'africa'
+and jumlahvaksin <> 0;
+
+select * from wowvaksin
+where continent="asia";
+
+select * from wowvaksin
+where jumlahvaksin <> 0;
+
